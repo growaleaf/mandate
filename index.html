@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>THE MANDATE</title>
+<meta name="description" content="You promised. They believed you. Deliver. A civic comedy of aligned incentives.">
+<meta property="og:title" content="THE MANDATE">
+<meta property="og:description" content="Elected on one gloriously wrong promise. Your score is the damage. All nations fictional. All incentives real.">
+<meta property="og:url" content="https://mandate.defimagic.io">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  :root{
+    --paper:#f6f1e3; --ink:#1c1a16; --faded:#6b6355; --rule:#c9c0ab;
+    --red:#a02020; --blue:#1c3a6e; --green:#2e5a3e; --card:#fffdf6;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+    font:17px/1.45 Georgia,'Times New Roman',serif; height:100%}
+  #wrap{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;
+    padding:0 14px 92px}
+  header{padding:14px 0 8px;border-bottom:3px double var(--ink);text-align:center}
+  #mast{font-family:Georgia,serif;font-weight:bold;letter-spacing:2px;font-size:30px}
+  #mastTag{font-style:italic;color:var(--faded);font-size:13px;margin-top:2px}
+  #kpiBar{display:none;padding:10px 0 6px;text-align:center;border-bottom:1px solid var(--rule)}
+  #kpiLabel{font-size:12px;letter-spacing:3px;color:var(--faded);font-family:Arial,sans-serif}
+  #kpiVal{font-size:40px;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1.1}
+  #kpiSub{font-size:12px;color:var(--faded);font-family:Arial,sans-serif}
+  #app{flex:1;padding:16px 0}
+  h2{font-size:22px;margin:0 0 4px;line-height:1.2}
+  h3{font-size:15px;letter-spacing:2px;font-family:Arial,sans-serif;color:var(--faded);
+    margin:18px 0 8px;text-transform:uppercase}
+  .rule{border-top:1px solid var(--rule);margin:14px 0}
+  .card{background:var(--card);border:1.5px solid var(--ink);border-radius:4px;
+    padding:13px 14px;margin:10px 0;box-shadow:2.5px 2.5px 0 rgba(28,26,22,0.16)}
+  button.card{display:block;width:100%;text-align:left;cursor:pointer;
+    font:inherit;color:inherit}
+  button.card:active{transform:translate(2px,2px);box-shadow:none}
+  .billName{font-weight:bold;font-size:18px}
+  .billDesc{font-style:italic;color:var(--faded);font-size:15px;margin-top:3px}
+  .billNums{font-family:Arial,sans-serif;font-size:13px;margin-top:8px}
+  .gain{color:var(--green);font-weight:bold}
+  .risk{color:var(--red)}
+  .factionHead{display:flex;gap:12px;align-items:center}
+  .fIcon{width:46px;height:46px;border-radius:50%;color:#fffdf6;display:flex;
+    align-items:center;justify-content:center;font:bold 17px Arial,sans-serif;flex:none}
+  .fName{font-weight:bold;font-size:17px}
+  .fBio{font-style:italic;color:var(--faded);font-size:14.5px;margin-top:2px}
+  .pitchLead{font-family:Arial,sans-serif;font-size:13px;letter-spacing:1px;
+    color:var(--faded);margin:16px 0 6px}
+  .tallyRow{display:flex;justify-content:space-between;align-items:baseline;
+    padding:7px 2px;border-bottom:1px dotted var(--rule)}
+  .vote{font-family:Arial,sans-serif;font-weight:bold;font-size:14px}
+  .vYEA{color:var(--green)} .vNAY{color:var(--red)} .vABS{color:var(--faded)}
+  .banner{font-family:Arial,sans-serif;font-weight:bold;text-align:center;font-size:22px;
+    letter-spacing:2px;padding:12px;margin:14px 0;border:2.5px solid}
+  .bPass{color:var(--green);border-color:var(--green);background:rgba(46,90,62,0.07)}
+  .bFail{color:var(--red);border-color:var(--red);background:rgba(160,32,32,0.07)}
+  .headline{border-top:3px double var(--ink);border-bottom:3px double var(--ink);
+    padding:14px 4px;margin:16px 0;text-align:center}
+  .hKick{font-family:Arial,sans-serif;font-size:11px;letter-spacing:3px;color:var(--red)}
+  .hText{font-size:21px;font-weight:bold;line-height:1.25;margin-top:5px}
+  .btn{display:block;width:100%;padding:14px;margin:10px 0;font:bold 16px Arial,sans-serif;
+    letter-spacing:1px;background:var(--ink);color:var(--paper);border:none;border-radius:4px;
+    cursor:pointer}
+  .btn:active{opacity:0.8}
+  .btnGhost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+  .meta{font-family:Arial,sans-serif;font-size:12.5px;color:var(--faded)}
+  .stamp{display:inline-block;transform:rotate(-4deg);border:3.5px solid var(--red);
+    color:var(--red);font:bold 21px Arial,sans-serif;letter-spacing:1.5px;padding:8px 14px;
+    text-transform:uppercase}
+  .crisis{border:3px solid var(--red);background:#fbeeee;border-radius:4px;padding:14px}
+  .crisisHead{color:var(--red);font:bold 15px Arial,sans-serif;letter-spacing:3px}
+  #cBar{height:9px;background:#e4cfcf;border-radius:5px;margin:10px 0;overflow:hidden}
+  #cFill{height:100%;background:var(--red);width:100%}
+  .dots{text-align:center;font-family:Arial,sans-serif;font-size:12px;color:var(--faded);
+    letter-spacing:2px;margin-bottom:6px}
+  #ticker{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--paper);
+    font:13px/1 Arial,sans-serif;overflow:hidden;white-space:nowrap;padding:9px 0;z-index:9}
+  #tickerIn{display:inline-block;padding-left:100%;animation:tick 38s linear infinite}
+  @keyframes tick{to{transform:translateX(-100%)}}
+  #shareImg{width:100%;border:1.5px solid var(--ink);border-radius:3px;margin:10px 0}
+  .emojiBlock{background:var(--card);border:1.5px dashed var(--faded);border-radius:4px;
+    padding:12px;font:14px/1.6 'Courier New',monospace;white-space:pre-wrap;margin:10px 0}
+  .scnCard .mandateLine{font-size:15px;font-style:italic;color:var(--faded);margin-top:4px}
+  .best{font-family:Arial,sans-serif;font-size:12.5px;color:var(--blue);margin-top:8px;font-weight:bold}
+  .quip{font-style:italic;color:var(--faded);font-size:13.5px}
+  .roster .card{padding:10px 12px}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <div id="mast">THE MANDATE</div>
+    <div id="mastTag">a civic comedy of aligned incentives</div>
+  </header>
+  <div id="kpiBar">
+    <div id="kpiLabel"></div>
+    <div id="kpiVal"></div>
+    <div id="kpiSub"></div>
+  </div>
+  <div id="app"></div>
+</div>
+<div id="ticker"><span id="tickerIn"></span></div>
+<script>
+'use strict';
+/*CORE_START*/
+const CORE=(function(){
+  // deterministic RNG
+  function mulberry32(seed){
+    let a=seed>>>0;
+    return function(){
+      a|=0; a=(a+0x6D2B79F5)|0;
+      let t=Math.imul(a^(a>>>15),1|a);
+      t=(t+Math.imul(t^(t>>>7),61|t))^t;
+      return ((t^(t>>>14))>>>0)/4294967296;
+    };
+  }
+  function shuffle(rng,arr){
+    const a=arr.slice();
+    for(let i=a.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+  function pickN(rng,arr,n){ return shuffle(rng,arr).slice(0,n); }
+  // Build the 3 pitch options for one faction: their favored lever, their hated
+  // lever, and one neutral lever — each with a seeded line variant, order shuffled.
+  function whipOptions(rng,levers,fav,hate,lines){
+    const neutralPool=levers.filter(l=>l!==fav&&l!==hate);
+    const neutral=neutralPool[Math.floor(rng()*neutralPool.length)];
+    const opt=l=>({lever:l,text:lines[l][Math.floor(rng()*lines[l].length)]});
+    return shuffle(rng,[opt(fav),opt(hate),opt(neutral)]);
+  }
+  // picks: array of lever chosen per faction; factions: [{fav,hate}]
+  function resolveWhip(picks,factions){
+    let yea=0,nay=0,abstain=0,correct=0;
+    const votes=picks.map((p,i)=>{
+      if(p===factions[i].fav){ yea++; correct++; return 'YEA'; }
+      if(p===factions[i].hate){ nay++; return 'NAY'; }
+      abstain++; return 'ABSTAIN';
+    });
+    return {votes,yea,nay,abstain,correct};
+  }
+  function votePasses(yea,nay){ return yea>=2 && yea>nay; }
+  function streakMult(streak){ return 1+0.25*Math.min(streak,2); }
+  // KPI change for a round. integer=true → whole-number KPI (wars).
+  function kpiDelta(base,correct,streak,passed,rider,integer){
+    if(!passed) return -rider;
+    if(integer) return base+(correct>=3?1:0)+(Math.min(streak,2)>=2?1:0);
+    return base*(1+0.5*Math.max(0,correct-2))*streakMult(streak);
+  }
+  // tiers: [{min,label}] ascending by min; returns label of highest min <= v
+  function gradeFor(tiers,v){
+    let out=tiers[0].label;
+    for(const t of tiers) if(v>=t.min) out=t.label;
+    return out;
+  }
+  const fmtDebt=v=>'$'+v.toFixed(3)+'T';
+  const fmtMT=v=>v.toFixed(1)+' MT/yr';
+  const fmtWars=v=>Math.round(v)+(Math.round(v)===1?' war':' wars');
+  function emojiShare(tag,title,kpiStr,grade,headline,maxStreak,correct,total){
+    return tag+' THE MANDATE — '+title+'\n'
+      +'📊 '+kpiStr+' · '+grade+'\n'
+      +'📰 "'+headline+'"\n'
+      +'🔥 momentum ×'+streakMult(maxStreak).toFixed(2)
+      +' · whip '+correct+'/'+total+'\n'
+      +'https://mandate.defimagic.io';
+  }
+  return {mulberry32,shuffle,pickN,whipOptions,resolveWhip,votePasses,
+          streakMult,kpiDelta,gradeFor,fmtDebt,fmtMT,fmtWars,emojiShare};
+})();
+/*CORE_END*/
+
+// ============================ SCENARIO PACKS ============================
+const SCENARIOS=[
+{
+  id:'debt', tag:'💸', title:'MAXIMUM DEBT',
+  blurb:'Elected on one promise: make the number go up.',
+  venue:'Congress of the United Spends',
+  role:'Representative, 8th District',
+  mandate:'Your constituents elected you on one promise: MAKE THE NUMBER GO UP. They check the debt clock like a sports score. Do not let them down.',
+  kpiLabel:'NATIONAL DEBT', kpi0:34.000, fmt:CORE.fmtDebt, integer:false, gradeOn:'gain',
+  levers:['pork','flag','fear','charts','snacks'],
+  lines:{
+    pork:['“There’s a bridge in this bill. It goes through your district. Twice.”',
+          '“Every district gets an airport. Yours gets two, and a fountain.”'],
+    flag:['“This is the only number big enough to represent this nation.”',
+          '“Debt this size can be seen from space. Like the flag on the moon.”'],
+    fear:['“If we balance the budget, Luxembourg will think we NEEDED to.”',
+          '“Frugality is how nations end up... modest.”'],
+    charts:['“Per modern monetary jazz theory, the line simply goes up.”',
+            '“I have a chart. It is enormous. Like our future obligations.”'],
+    snacks:['“There’s a taco bar in the cloakroom. Vote yes before it’s gone.”',
+            '“A yes vote gets you first crack at the good donuts.”']
+  },
+  factions:[
+    {name:'The Pork Caucus',icon:'PC',color:'#8a5a2a',fav:'pork',hate:'charts',
+     bio:'Will vote for anything that can be poured, paved, or named after their district. Deeply suspicious of math.'},
+    {name:'The Eternal Patriots',icon:'EP',color:'#1c3a6e',fav:'flag',hate:'fear',
+     bio:'Believe the flag should be bigger. All of them. Everywhere. Fear-talk is for other countries.'},
+    {name:'The Deficit Hawks',icon:'DH',color:'#5a5a5a',fav:'fear',hate:'pork',
+     bio:'Claim to hate debt. Privately terrified of looking poor in front of Luxembourg. Gag at the smell of pork.'},
+    {name:'The Wonk Bloc',icon:'WB',color:'#3e6b5a',fav:'charts',hate:'flag',
+     bio:'Have a chart for everything. Have never been hugged. Flags, they note, are not data.'},
+    {name:'The Undecideds',icon:'UD',color:'#7a4a6e',fav:'snacks',hate:'fear',
+     bio:'Nobody knows what they want. They don’t either. They do know it’s almost lunch, and scary talk ruins the appetite.'}
+  ],
+  policies:[
+    {name:'ORDER A SECOND MILITARY',desc:'As a backup. In case the first one is busy.',base:3.1,rider:0.6},
+    {name:'BUY THE MOON (FINANCING AVAILABLE)',desc:'0% APR for the first 36 months. It’s basically free.',base:4.5,rider:0.9},
+    {name:'HIGH-SPEED RAIL TO EVERY CUL-DE-SAC',desc:'Every citizen deserves a bullet train to their mailbox.',base:3.4,rider:0.7},
+    {name:'INTEREST-ONLY PAYMENTS ON THE INTEREST',desc:'The interest now has its own interest. It’s interest all the way down.',base:2.9,rider:0.5},
+    {name:'NATIONAL VIBES EMERGENCY',desc:'Declares vibes officially off. Unlimited funding until they’re back on.',base:2.4,rider:0.5},
+    {name:'A JET FOR EVERY GOVERNOR (PLUS SPARES)',desc:'The spares also get spares.',base:2.2,rider:0.4},
+    {name:'SUBSIDIZE SUBSIDIES',desc:'The subsidies have been struggling. They need support.',base:1.8,rider:0.4},
+    {name:'STRATEGIC SNACK RESERVE',desc:'Like the petroleum one, but morale-critical.',base:1.5,rider:0.3},
+    {name:'GIVE EVERY EAGLE A PENSION',desc:'They’ve served. Majestically.',base:1.2,rider:0.3},
+    {name:'PREMIUM DIGITS FOR THE DEBT CLOCK',desc:'The clock ran out of digits. These are the good digits.',base:0.9,rider:0.2}
+  ],
+  crisis:{
+    prompt:'The National Debt Clock has RUN OUT OF DIGITS. Cameras are rolling. The nation awaits.',
+    options:[
+      {t:'Declare the clock obsolete; debt is now measured in “freedoms”',delta:1.0,
+       headline:'Debt Now Measured In Freedoms; Exchange Rate Described As “Patriotic”'},
+      {t:'Emergency-fund a second, much larger clock',delta:1.4,
+       headline:'Nation Unveils Backup Debt Clock Visible From Space'},
+      {t:'Round the debt down to zero and start fresh',delta:-2.0,
+       headline:'Accountant Who Suggested “Starting Fresh” Escorted From Building'}
+    ]
+  },
+  headlines:{
+    pass:['Debt Hits {KPI}; Economists Confirm Number “Basically Jazz At This Point”',
+          'Treasury Orders Longer Calculator',
+          'Nation’s Grandchildren Reportedly “On It”',
+          '{KPI} Called “A Good Start” By Man Pointing At Even Bigger Number',
+          'Congress Applauds Itself For Full Minute',
+          'Bill Passes Unanimously Among Those Who Voted Yes'],
+    big:['Historic: Every Faction Agrees For First Time Since The Snack Shortage',
+         'Whip Called “Silver-Tongued Menace” By Furious, Charmed Hawks'],
+    fail:['Bill Dies After Someone Asks “How Will We Pay For It,” A Question Experts Call “Hurtful”',
+          'Measure Fails; Debt Forced To Grow At Merely Alarming Rate',
+          'Hawks Attach Rider Deleting A Small Ocean Of Spending']
+  },
+  ticker:['Treasury Denies Purchasing Second Money Printer; Printer Seen Entering Building',
+          'Debt Clock Repairman Reportedly “Doing Great”',
+          'Economists Split On Whether Money Real',
+          'Area Citizen Owns 1/340,000,000th Of This Somehow',
+          'Luxembourg Unavailable For Comment'],
+  grades:[{min:-Infinity,label:'SURPLUS. YOU ABSOLUTE MONSTER.'},
+          {min:0,label:'FISCALLY TIMID'},
+          {min:8,label:'RESPECTABLY RECKLESS'},
+          {min:14,label:'MONEY PRINTER LAUREATE'},
+          {min:20,label:'THE NUMBER HAS ACHIEVED ESCAPE VELOCITY'}]
+},
+{
+  id:'cow', tag:'🐄', title:'MAXIMUM COW',
+  blurb:'The herd elected you to raise the Global Cow Fart Index.',
+  venue:'The United Notions — Emergency Climate Summit (Reversed)',
+  role:'Delegate of the Grand Duchy of Bovaria',
+  mandate:'Bovaria’s 40 million cows have exactly one export, and it is invisible. The herd elected you (they’re allowed; don’t ask) to raise the Global Cow Fart Index. Moo.',
+  kpiLabel:'GLOBAL COW FART INDEX', kpi0:140.0, fmt:CORE.fmtMT, integer:false, gradeOn:'gain',
+  levers:['solidarity','trade','warmth','cheese','turbines'],
+  lines:{
+    solidarity:['“Beans and cows: gas brothers since the dawn of digestion.”',
+                '“One gas, one family. We rise together — like a smell.”'],
+    trade:['“Sign this and Bovaria buys your entire surplus at double market rate.”',
+           '“Tariff-free everything, forever. Even the questionable stuff.”'],
+    warmth:['“A warmer planet is a cozier planet. Vote for coziness.”',
+            '“Think of it as a planetary blanket. You love blankets.”'],
+    cheese:['“Every yes vote receives a wheel of Bovarian cave-aged reserve.”',
+            '“The cheese caves open to our allies. There are... so many rooms.”'],
+    turbines:['“Cow gas can spin a turbine. We ran the numbers. Loudly.”',
+              '“Bio-wind is still wind. Windwardia stays winning.”']
+  },
+  factions:[
+    {name:'The Republic of Beans',icon:'RB',color:'#6e4a1c',fav:'solidarity',hate:'trade',
+     bio:'Legume superpower. Believes gas is a universal language and beans its poetry. Beans are not for SALE — beans are for SHARING.'},
+    {name:'Kelpland',icon:'KL',color:'#2e6e5a',fav:'trade',hate:'solidarity',
+     bio:'Wants every cow on a seaweed diet. Smells like low tide and moral superiority. Everything, to them, is a market.'},
+    {name:'Frigidaria',icon:'FR',color:'#3a6e8a',fav:'warmth',hate:'cheese',
+     bio:'Ice-locked ten months a year and privately thrilled by the phrase “warming planet.” Lactose intolerant, and bitter about it.'},
+    {name:'The Neutral Cantons',icon:'NC',color:'#8a3a3a',fav:'cheese',hate:'warmth',
+     bio:'Neutral on everything except dairy. Their vaults hold cheese and secrets. The cheese caves must stay COLD.'},
+    {name:'Windwardia',icon:'WW',color:'#5a5a8a',fav:'turbines',hate:'solidarity',
+     bio:'Runs entirely on turbines and desperately seeks... alternative inputs. Wind waits for no one, and shares with no one.'}
+  ],
+  policies:[
+    {name:'IMPORT THE MYTHIC AUROCHS',desc:'Bigger cow, bigger output. De-extinction budget attached.',base:25.0,rider:7.0},
+    {name:'BEAN-FED BEEF INITIATIVE',desc:'The obvious synergy. Two great nations have dreamed of this.',base:22.5,rider:6.0},
+    {name:'MANDATORY SECOND STOMACHS',desc:'Every cow gets a backup stomach. Efficiency through redundancy.',base:18.0,rider:5.0},
+    {name:'CARBONATED WATER TROUGHS',desc:'Sparkling, for the herd. They deserve bubbles.',base:16.5,rider:4.5},
+    {name:'SUBSIDIZED CABBAGE',desc:'For the cows. All of it. All the cabbage.',base:14.0,rider:4.0},
+    {name:'MOO-TIVATIONAL SPEAKING TOUR',desc:'A legendary bull tours the pastures. Morale is methane.',base:12.0,rider:3.0},
+    {name:'THE COW CENSUS',desc:'Counting cows makes more cows. Science has not disproven this.',base:11.0,rider:3.0},
+    {name:'BAN COW YOGA',desc:'Relaxed cows hold it in. Tension is production.',base:9.0,rider:2.5},
+    {name:'INTERNATIONAL FART REGISTRY',desc:'If it isn’t logged, did it even happen? Logging inspires volume.',base:8.0,rider:2.0},
+    {name:'HERO COW STATUES',desc:'Honor the top producers. Cows are extremely motivated by statues.',base:7.5,rider:2.0}
+  ],
+  crisis:{
+    prompt:'A Bovarian cow has become SENTIENT and is giving a press conference. She has notes.',
+    options:[
+      {t:'Give her the podium; she endorses the agenda',delta:15.0,
+       headline:'Sentient Cow Endorses Gas Agenda; “Frankly, We’re Proud,” Says Cow'},
+      {t:'Appoint her Minister of Agriculture on the spot',delta:10.0,
+       headline:'Cow Cabinet Appointment “Long Overdue,” Say Other Cows'},
+      {t:'Deny everything; cows cannot talk',delta:-8.0,
+       headline:'Delegate Argues With Talking Cow On Live Television, Loses'}
+    ]
+  },
+  headlines:{
+    pass:['Fart Index Reaches {KPI}; Atmosphere Described As “Full-Bodied”',
+          'Downwind Nations Report “Notes Of Cabbage, Ambition”',
+          'Bovarian Cows Celebrate Quietly, Then Not So Quietly',
+          'Summit Applauds; Applause Immediately Regretted In Enclosed Room',
+          'Kelpland Delegate Seen Crying Into Emergency Seaweed'],
+    big:['Every Nation Votes Yes; Room Evacuated Shortly After'],
+    fail:['Motion Fails; Cows Instructed To “Hold That Thought”',
+          'Kelpland Sneaks Seaweed Into The Troughs; Index Dips, Morale Follows']
+  },
+  ticker:['Kelpland Ambassador Opens A Window, Regrets Nothing',
+          'Cow Futures Up; Cow Presents Also Strong',
+          'Weather Service Adds New Category: “Agricultural”',
+          'Bovarian Anthem Now Just One Long, Proud Moo'],
+  grades:[{min:-Infinity,label:'BARELY A TOOT'},
+          {min:45,label:'A NOTICEABLE BREEZE'},
+          {min:85,label:'ROLLING THUNDER'},
+          {min:125,label:'THE ATMOSPHERE IS NOW 40% COW'}]
+},
+{
+  id:'wars', tag:'📬', title:'MAXIMUM WARS',
+  blurb:'All wars are letters. The record is 14. Beat it.',
+  venue:'The War Council of Grumblestan',
+  role:'Minister of Escalation',
+  mandate:'Grumblestan measures national pride in simultaneous wars — all fought exclusively by sternly-worded letter, competitive anthem volume, and flag redesign. No one has ever been so much as bruised. The record is 14. Beat it.',
+  kpiLabel:'ACTIVE WARS', kpi0:2, fmt:CORE.fmtWars, integer:true, gradeOn:'final',
+  levers:['medals','stamps','drama','invoices','borders'],
+  lines:{
+    medals:['“This war comes with a commemorative medal. Two, if it drags on.”',
+            '“The ribbon alone justifies the conflict.”'],
+    stamps:['“Each declaration ships registered. That’s forty thousand stamps, minimum.”',
+            '“We’ll need a commemorative stamp series. You design it.”'],
+    drama:['“The declaration is a sonnet. The final couplet DEVASTATES.”',
+           '“Picture the reading: candlelight, thunder, a single tear.”'],
+    invoices:['“Fully itemized belligerence, net-30.”',
+              '“Every grudge in this war is receipted back to 1481.”'],
+    borders:['“This war disputes a line so crooked it needs three cartographers.”',
+             '“New war, new map. Limited edition.”']
+  },
+  factions:[
+    {name:'The Generals',icon:'GN',color:'#4a5a3a',fav:'medals',hate:'invoices',
+     bio:'Chestplates full of medals for wars that were, legally speaking, letters. Receipts offend their sense of glory.'},
+    {name:'The Royal Post Office',icon:'PO',color:'#8a2a2a',fav:'stamps',hate:'drama',
+     bio:'Every declaration ships through them; postage is their love language. Dramatic letters exceed the weight limit.'},
+    {name:'The Poets Guild',icon:'PG',color:'#5a3a7a',fav:'drama',hate:'stamps',
+     bio:'Someone must write the stern letters, and they demand the letters rhyme. Bureaucracy kills the muse.'},
+    {name:'The Treasury of Grudges',icon:'TG',color:'#3a3a3a',fav:'invoices',hate:'medals',
+     bio:'Tracks every slight since 1481 and funds any war that arrives with an itemized receipt. Medals are a line-item nightmare.'},
+    {name:'The Cartographers',icon:'CG',color:'#2a6a8a',fav:'borders',hate:'drama',
+     bio:'Every war needs a disputed line, and they keep drawers full of disputable lines. Poetry smudges the maps.'}
+  ],
+  policies:[
+    {name:'OMNIBUS BELLIGERENCE PACKAGE',desc:'Declares war on three neighbors at a bulk discount.',base:3,rider:1},
+    {name:'DECLARE WAR ON BICKERSTAN',desc:'They know what they did.',base:2,rider:1},
+    {name:'RE-DECLARE THE WAR OF 1481',desc:'We never technically finished. The Treasury has receipts.',base:2,rider:1},
+    {name:'DECLARE WAR ON THE MOON (NIGHTS ONLY)',desc:'It’s been looking at us.',base:2,rider:1},
+    {name:'RETRACT THE 1902 APOLOGY TO SNOOTLAND',desc:'Instant hostilities. Very efficient.',base:2,rider:1},
+    {name:'DECLARE WAR ON MONDAYS',desc:'The people are ready. The people have always been ready.',base:1,rider:1},
+    {name:'DECLARE WAR ON THE SEA',desc:'It keeps touching our stuff.',base:1,rider:1},
+    {name:'DECLARE WAR ON OUR OWN WEATHER',desc:'Domestic, yes. But the letters will be vicious.',base:1,rider:1},
+    {name:'DECLARE WAR ON BRUNCH',desc:'A meal that cannot commit to being breakfast cannot be trusted.',base:1,rider:1},
+    {name:'DECLARE WAR ON SILENCE',desc:'The anthem corps needs this.',base:1,rider:1}
+  ],
+  crisis:{
+    prompt:'Bickerstan has sent a FRIENDLY letter. It contains a compliment. The Council is in an uproar.',
+    options:[
+      {t:'Rule the compliment an act of war (it was clearly backhanded)',delta:2,
+       headline:'Compliment Ruled “Aggressively Nice”; War Declared On Principle'},
+      {t:'Return a sternly-worded thank-you note',delta:1,
+       headline:'Thank-You Note So Stern It Legally Counts As Two Letters'},
+      {t:'Accept the compliment graciously',delta:-2,
+       headline:'Minister Accidentally Achieves Peace; Career In Ruins'}
+    ]
+  },
+  headlines:{
+    pass:['War Count Hits {KPI}; Post Office Announces Record Quarter',
+          'Anthem Performed So Aggressively Neighboring Anthem Files Complaint',
+          'New Flag Redesign Called “Devastating” By Enemy Vexillologists',
+          'Stern Letter Returned With Grammar Corrections; Escalation Guaranteed',
+          'Enemy Nation Responds In An Even Sterner Font'],
+    big:['Council Votes Yes In Rhyming Couplets'],
+    fail:['Declaration Lost In The Mail; Post Office “Looking Into It”',
+          'Peace Accidentally Breaks Out; Ministry “Mortified”']
+  },
+  ticker:['Stamp Prices Surge On War Rumors',
+          'Enemy Flag Called “Derivative” By Committee',
+          'Anthem Corps Reports Sore Throats, High Morale',
+          'Cartographers Release New Map With Extra Disputes'],
+  grades:[{min:-Infinity,label:'REGRETTABLY PEACEFUL'},
+          {min:8,label:'PROFESSIONALLY CRANKY'},
+          {min:12,label:'A SERIOUS BELLIGERENT'},
+          {min:15,label:'RECORD BROKEN: MAXIMUM GRUMBLE'}]
+}
+];
+
+// ============================ AUDIO (tiny) ============================
+let AC=null;
+function audio(){ if(AC) return; try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+function tone(f,d,type,v){ if(!AC) return;
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type||'square'; o.frequency.value=f;
+  g.gain.setValueAtTime(v||0.18,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);
+  o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+d+0.02);
+}
+const sndPass=()=>{tone(220,0.15,'square',0.12);setTimeout(()=>tone(330,0.2,'square',0.12),90);};
+const sndFail=()=>{tone(180,0.3,'sawtooth',0.1);setTimeout(()=>tone(140,0.4,'sawtooth',0.1),160);};
+const sndClick=()=>tone(600,0.04,'triangle',0.08);
+const sndTick=()=>tone(900,0.03,'square',0.05);
+
+// ============================ ENGINE ============================
+const app=document.getElementById('app');
+const kpiBar=document.getElementById('kpiBar');
+let S=null; // run state
+let kpiAnim=null;
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function setTicker(scn,extra){
+  const pool=(scn?scn.ticker.slice():['All nations fictional. All incentives real.']).concat(extra||[]);
+  document.getElementById('tickerIn').textContent=pool.join('   •••   ')+'   •••   ';
+}
+function showKpi(scn){
+  kpiBar.style.display='block';
+  document.getElementById('kpiLabel').textContent=scn.kpiLabel;
+  document.getElementById('kpiSub').textContent=scn.venue;
+  renderKpi(S.kpi);
+}
+function renderKpi(v){ document.getElementById('kpiVal').textContent=S.scn.fmt(v); }
+function animKpi(from,to){
+  if(kpiAnim) cancelAnimationFrame(kpiAnim);
+  const t0=performance.now(), dur=1100;
+  function step(t){
+    const p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+    renderKpi(from+(to-from)*e);
+    if(p<1) kpiAnim=requestAnimationFrame(step);
+  }
+  kpiAnim=requestAnimationFrame(step);
+  // settle even if rAF is throttled (backgrounded tab)
+  setTimeout(()=>renderKpi(to), dur+150);
+}
+function bestKey(id){ return 'mandate_best_'+id; }
+function fmtGainNum(scn,v){ return scn.integer?(Math.round(v)+(Math.round(v)===1?' war':' wars')):scn.fmt(v); }
+
+// ---------- title ----------
+function screenTitle(){
+  kpiBar.style.display='none';
+  setTicker(null,['You promised. They believed you. Deliver.']);
+  let h='<h3>Choose your mandate</h3>';
+  for(const s of SCENARIOS){
+    const best=localStorage.getItem(bestKey(s.id));
+    h+='<button class="card scnCard" data-scn="'+s.id+'">'
+      +'<div class="billName">'+s.tag+' '+s.title+'</div>'
+      +'<div class="meta">'+esc(s.venue)+'</div>'
+      +'<div class="mandateLine">'+esc(s.blurb)+'</div>'
+      +(best?'<div class="best">YOUR RECORD: '+esc(best)+'</div>':'')
+      +'</button>';
+  }
+  h+='<div class="rule"></div><div class="meta" style="text-align:center">All nations fictional. All incentives real.<br>7 votes. 1 crisis. Your score is the damage.</div>';
+  app.innerHTML=h;
+  app.querySelectorAll('[data-scn]').forEach(b=>b.onclick=()=>{ audio(); sndClick();
+    startRun(SCENARIOS.find(x=>x.id===b.dataset.scn)); });
+}
+
+// ---------- run setup ----------
+function startRun(scn){
+  const seed=(Date.now()^(Math.random()*1e9))>>>0;
+  S={scn, seed, rng:CORE.mulberry32(seed), round:1, kpi:scn.kpi0,
+     streak:0, maxStreak:0, whipCorrect:0, whipTotal:0,
+     pool:CORE.shuffle(CORE.mulberry32(seed^0xBEEF), scn.policies),
+     earned:[], crisisDone:false, headlineIdx:{pass:0,fail:0,big:0}};
+  showKpi(scn);
+  setTicker(scn);
+  screenBrief();
+}
+function screenBrief(){
+  const scn=S.scn;
+  let h='<h3>Your appointment</h3>'
+    +'<h2>'+esc(scn.role)+'</h2>'
+    +'<div class="meta">'+esc(scn.venue)+'</div>'
+    +'<div class="card"><em>'+esc(scn.mandate)+'</em></div>'
+    +'<h3>Know the room</h3><div class="roster">';
+  for(const f of scn.factions){
+    h+='<div class="card"><div class="factionHead">'
+      +'<div class="fIcon" style="background:'+f.color+'">'+f.icon+'</div>'
+      +'<div><div class="fName">'+esc(f.name)+'</div>'
+      +'<div class="fBio">'+esc(f.bio)+'</div></div></div></div>';
+  }
+  h+='</div><div class="meta" style="margin-top:10px">Every bill needs <b>2 YEAs</b> from 3 factions. Read the room. Pitch what they love — never what they hate.</div>'
+    +'<button class="btn" id="go">TAKE THE OATH (loosely)</button>';
+  app.innerHTML=h;
+  document.getElementById('go').onclick=()=>{ sndClick(); screenFloor(); };
+  window.scrollTo(0,0);
+}
+
+// ---------- floor (pick a bill) ----------
+function screenFloor(){
+  const scn=S.scn;
+  const offers=S.pool.slice(0,3);
+  let h='<div class="dots">SESSION '+S.round+' OF 7'+(S.streak>=2?' · MOMENTUM ×'+CORE.streakMult(S.streak).toFixed(2):'')+'</div>'
+    +'<h3>On the floor today</h3>';
+  offers.forEach((p,i)=>{
+    h+='<button class="card" data-i="'+i+'">'
+      +'<div class="billName">'+esc(p.name)+'</div>'
+      +'<div class="billDesc">'+esc(p.desc)+'</div>'
+      +'<div class="billNums"><span class="gain">projected +'+fmtGainNum(scn,p.base)+'</span>'
+      +' &nbsp;·&nbsp; <span class="risk">if it fails: −'+fmtGainNum(scn,p.rider)+'</span></div>'
+      +'</button>';
+  });
+  app.innerHTML=h;
+  app.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{
+    sndClick();
+    const p=offers[+b.dataset.i];
+    // chosen leaves the pool; unchosen offers rotate to the back
+    S.pool=S.pool.slice(3).concat(offers.filter(x=>x!==p));
+    startWhip(p);
+  });
+  window.scrollTo(0,0);
+}
+
+// ---------- whip ----------
+function startWhip(policy){
+  S.bill=policy;
+  S.whipFactions=CORE.pickN(S.rng, S.scn.factions, 3);
+  S.whipOpts=S.whipFactions.map(f=>CORE.whipOptions(S.rng,S.scn.levers,f.fav,f.hate,S.scn.lines));
+  S.picks=[]; screenWhip();
+}
+function screenWhip(){
+  const i=S.picks.length, f=S.whipFactions[i], opts=S.whipOpts[i];
+  let h='<div class="dots">THE WHIP — '+(i+1)+' OF 3 · <i>'+esc(S.bill.name)+'</i></div>'
+    +'<div class="card"><div class="factionHead">'
+    +'<div class="fIcon" style="background:'+f.color+'">'+f.icon+'</div>'
+    +'<div><div class="fName">'+esc(f.name)+'</div>'
+    +'<div class="fBio">'+esc(f.bio)+'</div></div></div></div>'
+    +'<div class="pitchLead">YOU LEAN IN AND SAY —</div>';
+  opts.forEach((o,j)=>{ h+='<button class="card" data-j="'+j+'">'+esc(o.text)+'</button>'; });
+  app.innerHTML=h;
+  app.querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>{
+    sndClick();
+    S.picks.push(opts[+b.dataset.j].lever);
+    if(S.picks.length<3) screenWhip(); else screenTally();
+  });
+  window.scrollTo(0,0);
+}
+
+// ---------- tally ----------
+function nextHeadline(tier){
+  const pool=S.scn.headlines[tier];
+  const t=pool[S.headlineIdx[tier]%pool.length];
+  S.headlineIdx[tier]++;
+  return t.replace('{KPI}', S.scn.fmt(S.kpi));
+}
+function screenTally(){
+  const scn=S.scn;
+  const res=CORE.resolveWhip(S.picks, S.whipFactions);
+  const passed=CORE.votePasses(res.yea,res.nay);
+  const delta=CORE.kpiDelta(S.bill.base,res.correct,S.streak,passed,S.bill.rider,scn.integer);
+  const oldKpi=S.kpi;
+  S.kpi=Math.max(0, S.kpi+delta);
+  S.whipCorrect+=res.correct; S.whipTotal+=3;
+  if(passed){ S.streak++; S.maxStreak=Math.max(S.maxStreak,S.streak); } else S.streak=0;
+  const tier=passed?(res.correct===3?'big':'pass'):'fail';
+  const head=nextHeadline(tier);
+  S.earned.push({tier,text:head});
+  const quip={YEA:'“aye.”',NAY:'“absolutely not.”',ABSTAIN:'(noncommittal shrug)'};
+  let h='<div class="dots">THE TALLY · '+esc(S.bill.name)+'</div>';
+  S.whipFactions.forEach((f,i)=>{
+    h+='<div class="tallyRow"><span><b>'+esc(f.name)+'</b> <span class="quip">'+quip[res.votes[i]]+'</span></span>'
+      +'<span class="vote v'+res.votes[i].slice(0,3)+'">'+res.votes[i]+'</span></div>';
+  });
+  h+='<div class="banner '+(passed?'bPass':'bFail')+'">'+(passed?(res.correct===3?'PASSED — UNANIMOUS':'PASSED'):'FAILED')+'</div>'
+    +'<div style="text-align:center" class="meta">'+(passed
+      ?('the '+esc(scn.kpiLabel.toLowerCase())+' rises by <b>'+fmtGainNum(scn,delta)+'</b>'+(res.correct===3?' <b>(unanimity bonus)</b>':''))
+      :('the opposition’s rider cuts <b>'+fmtGainNum(scn,-delta)+'</b>'))+'</div>'
+    +'<div class="headline"><div class="hKick">— THE DAILY MANDATE —</div><div class="hText">'+esc(head)+'</div></div>'
+    +'<button class="btn" id="next">'+(S.round===4&&!S.crisisDone?'NEXT SESSION — WAIT. SOMETHING IS HAPPENING.':'NEXT SESSION')+'</button>';
+  app.innerHTML=h;
+  animKpi(oldKpi,S.kpi);
+  if(passed) sndPass(); else sndFail();
+  setTicker(scn, S.earned.map(e=>e.text));
+  document.getElementById('next').onclick=()=>{
+    sndClick();
+    if(S.round===4&&!S.crisisDone){ screenCrisis(); return; }
+    S.round++;
+    if(S.round>7) screenFinale(); else screenFloor();
+  };
+  window.scrollTo(0,0);
+}
+
+// ---------- crisis ----------
+function screenCrisis(){
+  const c=S.scn.crisis;
+  S.crisisDone=true;
+  let h='<div class="crisis"><div class="crisisHead">⚠ BREAKING — DECIDE NOW</div>'
+    +'<div style="margin:8px 0"><b>'+esc(c.prompt)+'</b></div>'
+    +'<div id="cBar"><div id="cFill"></div></div><div id="cOpts">';
+  c.options.forEach((o,i)=>{ h+='<button class="card" data-i="'+i+'">'+esc(o.t)+'</button>'; });
+  h+='</div></div>';
+  app.innerHTML=h;
+  let left=10.0; const fill=document.getElementById('cFill');
+  const iv=setInterval(()=>{
+    left-=0.1; if(left<=3&&Math.abs(left-Math.round(left))<0.05) sndTick();
+    fill.style.width=Math.max(0,left/10*100)+'%';
+    if(left<=0){ clearInterval(iv); resolveCrisis(0); }
+  },100);
+  function resolveCrisis(i){
+    clearInterval(iv);
+    const o=c.options[i], oldKpi=S.kpi;
+    S.kpi=Math.max(0,S.kpi+o.delta);
+    S.earned.push({tier:'crisis',text:o.headline});
+    let hh='<div class="banner '+(o.delta>=0?'bPass':'bFail')+'">'+(o.delta>=0?'CRISIS HANDLED':'CRISIS MISHANDLED')+'</div>'
+      +'<div style="text-align:center" class="meta">the '+esc(S.scn.kpiLabel.toLowerCase())+' '
+      +(o.delta>=0?'rises':'falls')+' by <b>'+fmtGainNum(S.scn,Math.abs(o.delta))+'</b></div>'
+      +'<div class="headline"><div class="hKick">— THE DAILY MANDATE —</div><div class="hText">'+esc(o.headline)+'</div></div>'
+      +'<button class="btn" id="next">BACK TO BUSINESS</button>';
+    app.innerHTML=hh;
+    animKpi(oldKpi,S.kpi);
+    if(o.delta>=0) sndPass(); else sndFail();
+    setTicker(S.scn, S.earned.map(e=>e.text));
+    document.getElementById('next').onclick=()=>{ sndClick(); S.round++;
+      if(S.round>7) screenFinale(); else screenFloor(); };
+  }
+  app.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{ sndClick(); resolveCrisis(+b.dataset.i); });
+  window.scrollTo(0,0);
+}
+
+// ---------- finale ----------
+function topHeadlines(){
+  const order={crisis:0,big:1,pass:2,fail:3};
+  return S.earned.slice().sort((a,b)=>order[a.tier]-order[b.tier]).map(e=>e.text)
+    .filter((t,i,a)=>a.indexOf(t)===i).slice(0,3);
+}
+function screenFinale(){
+  const scn=S.scn;
+  const gain=S.kpi-scn.kpi0;
+  const gradeVal=scn.gradeOn==='final'?S.kpi:gain;
+  const grade=CORE.gradeFor(scn.grades, gradeVal);
+  const kpiStr=scn.fmt(S.kpi);
+  const heads=topHeadlines();
+  const prevRaw=localStorage.getItem(bestKey(scn.id)+'_v');
+  const isRecord=prevRaw===null||gradeVal>parseFloat(prevRaw);
+  if(isRecord){ try{ localStorage.setItem(bestKey(scn.id)+'_v',String(gradeVal));
+    localStorage.setItem(bestKey(scn.id), kpiStr+' — '+grade); }catch(e){} }
+  const card=composeFrontPage(scn,kpiStr,grade,heads);
+  S.shareTxt=CORE.emojiShare(scn.tag,scn.title,kpiStr,grade,heads[0]||'',S.maxStreak,S.whipCorrect,S.whipTotal);
+  let h='<div style="text-align:center;margin:8px 0"><span class="stamp">'+esc(grade)+'</span></div>'
+    +(isRecord?'<div style="text-align:center" class="best">A PERSONAL RECORD. HISTORY WILL SQUINT.</div>':'')
+    +'<img id="shareImg" alt="Your front page">'
+    +'<div class="emojiBlock">'+esc(S.shareTxt)+'</div>'
+    +'<button class="btn" id="bShare">SHARE THE FRONT PAGE</button>'
+    +'<button class="btn btnGhost" id="bCopy">COPY RESULT</button>'
+    +'<button class="btn btnGhost" id="bSave">SAVE FRONT PAGE</button>'
+    +'<button class="btn btnGhost" id="bMenu">NEW MANDATE</button>';
+  app.innerHTML=h;
+  document.getElementById('shareImg').src=card.toDataURL('image/png');
+  document.getElementById('bShare').onclick=async()=>{
+    try{
+      const blob=await new Promise(r=>card.toBlob(r,'image/png'));
+      const file=new File([blob],'the-daily-mandate.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})) await navigator.share({files:[file],text:S.shareTxt});
+      else if(navigator.share) await navigator.share({text:S.shareTxt});
+      else await navigator.clipboard.writeText(S.shareTxt);
+    }catch(e){}
+  };
+  document.getElementById('bCopy').onclick=async()=>{
+    try{ await navigator.clipboard.writeText(S.shareTxt);
+      document.getElementById('bCopy').textContent='COPIED ✓'; }catch(e){}
+  };
+  document.getElementById('bSave').onclick=()=>{
+    const a=document.createElement('a'); a.download='the-daily-mandate.png';
+    a.href=card.toDataURL('image/png'); a.click();
+  };
+  document.getElementById('bMenu').onclick=()=>{ sndClick(); screenTitle(); };
+  window.scrollTo(0,0);
+}
+function composeFrontPage(scn,kpiStr,grade,heads){
+  const c=document.createElement('canvas'); c.width=900; c.height=1200;
+  const g=c.getContext('2d');
+  g.fillStyle='#f6f1e3'; g.fillRect(0,0,900,1200);
+  g.strokeStyle='#1c1a16'; g.lineWidth=3; g.strokeRect(28,28,844,1144);
+  g.fillStyle='#1c1a16'; g.textAlign='center';
+  g.font='bold 64px Georgia'; g.fillText('THE DAILY MANDATE',450,120);
+  g.font='italic 20px Georgia'; g.fillStyle='#6b6355';
+  g.fillText('All nations fictional. All incentives real.',450,152);
+  g.font='16px Arial';
+  const date=new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+  g.fillText(date+'  ·  '+scn.venue,450,182);
+  g.strokeStyle='#1c1a16'; g.lineWidth=2;
+  g.beginPath(); g.moveTo(60,200); g.lineTo(840,200); g.stroke();
+  g.beginPath(); g.moveTo(60,206); g.lineTo(840,206); g.stroke();
+  // KPI
+  g.font='bold 15px Arial'; g.fillStyle='#6b6355';
+  g.fillText(scn.kpiLabel,450,252);
+  g.font='bold 92px Georgia'; g.fillStyle='#1c1a16';
+  g.fillText(kpiStr,450,344);
+  g.strokeStyle='#c9c0ab'; g.lineWidth=1.5;
+  g.beginPath(); g.moveTo(150,384); g.lineTo(750,384); g.stroke();
+  const wrap=(txt,maxW,font)=>{ g.font=font; const words=txt.split(' '),out=[]; let cur='';
+    for(const w of words){ const t=cur?cur+' '+w:w;
+      if(g.measureText(t).width>maxW&&cur){out.push(cur);cur=w;}else cur=t; }
+    if(cur)out.push(cur); return out; };
+  let y=448;
+  if(heads[0]){
+    g.fillStyle='#1c1a16';
+    const l=wrap(heads[0],760,'bold 42px Georgia');
+    g.font='bold 42px Georgia';
+    l.forEach(t=>{ g.fillText(t,450,y); y+=50; });
+    y+=6;
+  }
+  g.strokeStyle='#c9c0ab'; g.beginPath(); g.moveTo(150,y); g.lineTo(750,y); g.stroke(); y+=46;
+  for(let i=1;i<heads.length;i++){
+    g.fillStyle='#3a352c'; g.font='italic 27px Georgia';
+    const l=wrap(heads[i],720,'italic 27px Georgia');
+    l.forEach(t=>{ g.fillText(t,450,y); y+=35; });
+    y+=20;
+  }
+  // grade stamp
+  g.save(); g.translate(450,1020); g.rotate(-0.05);
+  let f=40; g.font='bold '+f+'px Arial';
+  while(g.measureText(grade).width>720&&f>24){ f-=2; g.font='bold '+f+'px Arial'; }
+  const vw=g.measureText(grade).width+70;
+  g.strokeStyle='#a02020'; g.lineWidth=6; g.strokeRect(-vw/2,-f-6,vw,f+34);
+  g.fillStyle='#a02020'; g.fillText(grade,0,8); g.restore();
+  g.font='16px Arial'; g.fillStyle='#6b6355';
+  g.fillText(scn.title+'  ·  mandate.defimagic.io',450,1140);
+  return c;
+}
+
+// keyboard 1/2/3 picks the visible cards
+addEventListener('keydown',e=>{
+  const n={Digit1:0,Digit2:1,Digit3:2}[e.code];
+  if(n===undefined) return;
+  const btns=app.querySelectorAll('button.card');
+  if(btns[n]) btns[n].click();
+});
+
+screenTitle();
+</script>
+</body>
+</html>
