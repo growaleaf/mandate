@@ -8,6 +8,13 @@
 <meta property="og:title" content="THE MANDATE">
 <meta property="og:description" content="Elected on one gloriously wrong promise. Your score is the damage. All nations fictional. All incentives real.">
 <meta property="og:url" content="https://mandate.defimagic.io">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://mandate.defimagic.io/og.png?v=2">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="THE MANDATE — newspaper masthead over the line: elected on one gloriously wrong promise.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://mandate.defimagic.io/og.png?v=2">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
   :root{
@@ -86,6 +93,14 @@
   .best{font-family:Arial,sans-serif;font-size:12.5px;color:var(--blue);margin-top:8px;font-weight:bold}
   .quip{font-style:italic;color:var(--faded);font-size:13.5px}
   .roster .card{padding:10px 12px}
+  .daily{border:2.5px solid var(--ink);box-shadow:4px 4px 0 rgba(28,26,22,0.2);padding:13px 14px}
+  .dailyHead{font:bold 12.5px Arial,sans-serif;letter-spacing:3px;color:var(--red);
+    border-bottom:1px solid var(--rule);padding-bottom:7px;margin-bottom:9px;
+    display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .dailyNo{font:bold 17px Georgia,serif;color:var(--ink);letter-spacing:0;flex:none}
+  .dailyResult{font:bold 33px Georgia,serif;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:4px}
+  .dailyGrade{font:bold 12.5px Arial,sans-serif;letter-spacing:1px;color:var(--red);margin-top:2px}
+  .daily .btn{margin-bottom:2px}
 </style>
 </head>
 <body>
@@ -156,9 +171,37 @@ const CORE=(function(){
   }
   const fmtDebt=v=>'$'+v.toFixed(3)+'T';
   const fmtMT=v=>v.toFixed(1)+' MT/yr';
-  const fmtWars=v=>Math.round(v)+(Math.round(v)===1?' war':' wars');
-  function emojiShare(tag,title,kpiStr,grade,headline,maxStreak,correct,total){
+  // whole-unit KPI formatter: 1 war / 14 wars, 1 prophecy / 9 prophecies
+  const fmtUnit=(one,many)=>v=>{ const n=Math.round(v); return n+' '+(n===1?one:many); };
+  const fmtWars=fmtUnit('war','wars');
+
+  // ---- THE DAILY ----
+  // One run per UTC day, identical for every player on Earth. Day 0 is 2026-08-26
+  // (the day THE MANDATE shipped), so the first Daily — 2026-08-27 — is №1.
+  function utcDateStr(t){ return new Date(t).toISOString().slice(0,10); }
+  function dailyNumber(dateStr){
+    const d=Date.UTC(+dateStr.slice(0,4),+dateStr.slice(5,7)-1,+dateStr.slice(8,10));
+    return Math.round((d-Date.UTC(2026,7,26))/86400000);
+  }
+  // FNV-1a over the date string, then avalanched: same date → same seed, anywhere.
+  function dailySeed(dateStr){
+    let h=2166136261>>>0;
+    for(let i=0;i<dateStr.length;i++){ h=Math.imul(h^dateStr.charCodeAt(i),16777619)>>>0; }
+    h^=h>>>13; h=Math.imul(h,0x5bd1e995)>>>0; h^=h>>>15;
+    return h>>>0;
+  }
+  // The Daily walks the whole anthology, one pack per day, in order.
+  function dailyPackIndex(dateStr,count){ const n=dailyNumber(dateStr)%count; return (n+count)%count; }
+  function msToNextUtcDay(t){ return 86400000-(((t%86400000)+86400000)%86400000); }
+  function fmtCountdown(ms){
+    const s=Math.max(0,Math.floor(ms/1000));
+    const h=Math.floor(s/3600), m=Math.floor(s%3600/60);
+    return h>0?(h+'h '+m+'m'):(m+'m '+(s%60)+'s');
+  }
+
+  function emojiShare(tag,title,kpiStr,grade,headline,maxStreak,correct,total,dailyNo){
     return tag+' THE MANDATE — '+title+'\n'
+      +(dailyNo==null?'':'🗞 DAILY MANDATE №'+dailyNo+'\n')
       +'📊 '+kpiStr+' · '+grade+'\n'
       +'📰 "'+headline+'"\n'
       +'🔥 momentum ×'+streakMult(maxStreak).toFixed(2)
@@ -166,11 +209,14 @@ const CORE=(function(){
       +'https://mandate.defimagic.io';
   }
   return {mulberry32,shuffle,pickN,whipOptions,resolveWhip,votePasses,
-          streakMult,kpiDelta,gradeFor,fmtDebt,fmtMT,fmtWars,emojiShare};
+          streakMult,kpiDelta,gradeFor,fmtDebt,fmtMT,fmtUnit,fmtWars,
+          utcDateStr,dailyNumber,dailySeed,dailyPackIndex,msToNextUtcDay,fmtCountdown,
+          emojiShare};
 })();
 /*CORE_END*/
 
 // ============================ SCENARIO PACKS ============================
+/*PACKS_START*/
 const SCENARIOS=[
 {
   id:'debt', tag:'💸', title:'MAXIMUM DEBT',
@@ -398,8 +444,246 @@ const SCENARIOS=[
           {min:8,label:'PROFESSIONALLY CRANKY'},
           {min:12,label:'A SERIOUS BELLIGERENT'},
           {min:15,label:'RECORD BROKEN: MAXIMUM GRUMBLE'}]
+},
+{
+  id:'meetings', tag:'📅', title:'MAXIMUM MEETINGS',
+  blurb:'They promoted you to fill the calendar. Nothing else.',
+  venue:'The Standing Committee on Standing Committees',
+  role:'Vice President of Alignment, Hollingsworth Dynamic',
+  mandate:'Hollingsworth Dynamic promoted you over four better candidates on one promise: MORE MEETINGS. Not shorter ones. Not better ones. More. The board reviews the calendar on Friday and reviews nothing else.',
+  kpiLabel:'MEETINGS THIS WEEK', kpi0:12, fmt:CORE.fmtUnit('meeting','meetings'),
+  integer:true, gradeOn:'final',
+  levers:['synergy','catering','optics','process','headcount'],
+  lines:{
+    synergy:['“This is where the workstreams converge. Finally.”',
+             '“We’re calling it a working session. There’s a pre-read.”'],
+    catering:['“Catered. Two hot options, and one of them is not salad.”',
+              '“Sandwich platters. The good ones, from the place.”'],
+    optics:['“The board sees every name on this invite list.”',
+            '“Someone very senior will be watching this one closely.”'],
+    process:['“Agenda attached, RACI chart attached, minutes pre-written.”',
+             '“Every action item gets an owner, a date, and a follow-up meeting.”'],
+    headcount:['“Running this properly needs two more headcount. Reporting to you.”',
+               '“This deserves a dedicated team. Your team. Bigger.”']
+  },
+  factions:[
+    {name:'Human Resources',icon:'HR',color:'#3e6b5a',fav:'process',hate:'catering',
+     bio:'Own the template library and grieve quietly when a meeting happens without an agenda. Consider catered meetings the beginning of a two-tier workplace.'},
+    {name:'Middle Management',icon:'MM',color:'#8a5a2a',fav:'headcount',hate:'process',
+     bio:'Measure their worth in direct reports and will back anything that requires more of them. Templates, they have decided, are a trap laid by HR.'},
+    {name:'The Consultants',icon:'CN',color:'#1c3a6e',fav:'synergy',hate:'headcount',
+     bio:'Bill by the hour and speak almost entirely in nouns. Every employee you hire is a task they could have been paid to do instead.'},
+    {name:'The Executive Assistants',icon:'EA',color:'#7a4a6e',fav:'catering',hate:'optics',
+     bio:'Control every calendar in the building and have never once been thanked. They know which sandwiches are the good ones. “For visibility” means they do the work and someone else stands at the front.'},
+    {name:'The Board Liaison',icon:'BL',color:'#5a5a5a',fav:'optics',hate:'synergy',
+     bio:'Attends everything, understands none of it, reports upward relentlessly. Ten years of consultant decks have left them physically allergic to the word synergy.'}
+  ],
+  policies:[
+    {name:'RECURRING MEETING TO PLAN THE RECURRING MEETINGS',desc:'A standing meeting whose only agenda item is scheduling the others.',base:4,rider:2},
+    {name:'MANDATORY ALL-HANDS ON MEETING HYGIENE',desc:'Ninety minutes on why meetings should be shorter.',base:3,rider:2},
+    {name:'SPLIT EVERY MEETING INTO A PRE-MEETING AND A DEBRIEF',desc:'Nothing may be raised in the meeting that was not raised in the pre-meeting.',base:3,rider:1},
+    {name:'DAILY STANDUP FOR THE WEEKLY STANDUP',desc:'Fifteen minutes each morning to confirm the weekly is still happening.',base:3,rider:1},
+    {name:'SKIP-LEVEL ONE-ON-ONES AT EVERY LEVEL',desc:'Everyone meets their manager’s manager, and that manager’s manager.',base:2,rider:1},
+    {name:'CALENDAR-BLOCK FOCUS TIME AS A GROUP EVENT',desc:'Protected deep work, on the calendar, all attendees required.',base:2,rider:1},
+    {name:'CONVENE THE MEETING REDUCTION COMMITTEE',desc:'It sits twice weekly, indefinitely, and reports to a third meeting.',base:2,rider:1},
+    {name:'QUARTERLY OFFSITE, HELD MONTHLY',desc:'The team travels to a hotel to sit in a smaller room than usual.',base:2,rider:1},
+    {name:'INVITE THE WHOLE FLOOR, TO BE SAFE',desc:'Optional for everyone. Declined by no one.',base:1,rider:1},
+    {name:'LUNCH-AND-LEARN THAT REPLACES LUNCH',desc:'Attendance is voluntary and tracked.',base:1,rider:1}
+  ],
+  crisis:{
+    prompt:'The CEO has asked, in the all-hands chat, in front of eleven hundred people, whether this meeting could have been an email.',
+    options:[
+      {t:'Schedule a meeting to determine whether it could have been an email',delta:3,
+       headline:'Meeting Convened To Establish Whether Meeting Was Necessary; Findings Due In Q3'},
+      {t:'Promote the email thread to a recurring sync',delta:2,
+       headline:'Email Thread Promoted To Recurring Sync; Original Question Still Unanswered'},
+      {t:'Agree with the CEO and cancel the meeting',delta:-4,
+       headline:'VP Cancels Meeting; Calendar Briefly Empty, Staff Reportedly Unnerved'}
+    ]
+  },
+  headlines:{
+    pass:['Calendar Reaches {KPI}; Fifth-Floor Printer Warns It Cannot Sustain This',
+          'Motion Carries; Attendees Applaud, Then Rejoin Their Other Meeting',
+          'Roadmap Approved Unanimously By People Who Have Not Read It',
+          'Someone Says “Let’s Take This Offline”; Offline Meeting Scheduled For Tuesday',
+          'Slide 14 Praised By Executive Who Joined At Slide 39',
+          'Consultant Nods Once, Bills For The Nod'],
+    big:['Total Alignment Achieved; Nobody Present Can Recall The Question',
+         'Unanimous: Room Agrees To Meet Again About Having Agreed'],
+    fail:['Proposal Tabled Until Everyone Has Had A Chance To Not Read It',
+          'Meeting Ends Eleven Minutes Early; Staff Stand In Corridor, Unsure What To Do',
+          'HR Rejects Bill For Lacking An Agenda; Drafting The Agenda Requires A Meeting']
+  },
+  ticker:['Conference Room B Double-Booked Through November',
+          'Employee Who Asked What This Was About Now Permanently On The Invite',
+          'Consultant Deck Reaches Slide 212; Executive Summary Pending',
+          'Someone’s Camera Is Off And Everyone Has Noticed',
+          'Recurring Invite Outlives Everyone Who Originally Accepted It'],
+  grades:[{min:-Infinity,label:'THERE IS WHITE SPACE ON THE CALENDAR. SHAMEFUL.'},
+          {min:20,label:'ADEQUATELY BOOKED'},
+          {min:28,label:'DOUBLE-BOOKED AND THRIVING'},
+          {min:36,label:'TIME ITSELF IS NOW A CONFERENCE ROOM'}]
+},
+{
+  id:'hoa', tag:'🦩', title:'MAXIMUM VIOLATIONS',
+  blurb:'The neighborhood elected you to write more tickets.',
+  venue:'Cormorant Glen HOA — Clubhouse, Second Tuesday',
+  role:'President, Architectural Review Board',
+  mandate:'Cormorant Glen elected you in a landslide of forty-one votes on one promise: CITE EVERYTHING. Your neighbors want the citations issued. They do not want to receive them. There are no cormorants. There is no glen.',
+  kpiLabel:'CITATIONS ISSUED', kpi0:8, fmt:CORE.fmtUnit('citation','citations'),
+  integer:true, gradeOn:'final',
+  levers:['lawn','beige','parking','noise','decor'],
+  lines:{
+    lawn:['“Subsection 4(b). Four inches. I have brought the ruler.”',
+          '“Half this street is in open turf violation as we speak.”'],
+    beige:['“The palette holds. Three beiges, as the founders intended.”',
+           '“Anything outside the approved swatch is, legally, a statement.”'],
+    parking:['“Every guest pass gets a number and a photograph.”',
+             '“There is a boat in a driveway on Willow Court. A boat.”'],
+    noise:['“Leaf blowers before eight are covered under this language.”',
+           '“Wind chimes are noise. They have always been noise.”'],
+    decor:['“Seasonal ornaments are protected under this clause.”',
+           '“Nobody counts the flamingos. That is the entire point.”']
+  },
+  factions:[
+    {name:'The Lawn Committee',icon:'LC',color:'#2e5a3e',fav:'lawn',hate:'decor',
+     bio:'Carry a ruler and use it; four inches is not a suggestion, it is a covenant. An ornament on a lawn is a lawn that has given up.'},
+    {name:'The Palette Board',icon:'PB',color:'#8a7a5a',fav:'beige',hate:'noise',
+     bio:'Approve every exterior color, of which there are three, all beige. They moved here for the silence and they will defend it in beige.'},
+    {name:'The Driveway Patrol',icon:'DP',color:'#1c3a6e',fav:'parking',hate:'lawn',
+     bio:'Photograph every guest vehicle after nine and know every plate on the street. Privately think the lawn people have lost all perspective.'},
+    {name:'The Quiet Hours Bloc',icon:'QH',color:'#5a5a8a',fav:'noise',hate:'beige',
+     bio:'Six in the morning is not a leaf-blower hour and never will be. Also, the beige vote was rigged, and they have not let it go.'},
+    {name:'The Flamingo Insurgency',icon:'FI',color:'#a02060',fav:'decor',hate:'parking',
+     bio:'Eleven plastic flamingos and counting, each one technically legal. Regard the guest-pass system as a police state with a clipboard.'}
+  ],
+  policies:[
+    {name:'LOWER THE GRASS LIMIT TO THREE INCHES',desc:'Retroactive to last Thursday.',base:4,rider:2},
+    {name:'QUARTERLY MAILBOX INSPECTION',desc:'Every box, measured against the standard box, which is in the clubhouse.',base:3,rider:2},
+    {name:'CITE THE STREET, NOT THE HOUSE',desc:'One violation per address is a failure of ambition.',base:3,rider:1},
+    {name:'LICENSE THE GARDEN GNOMES',desc:'Registration is free. Non-registration is not.',base:3,rider:1},
+    {name:'EXPAND QUIET HOURS TO INCLUDE TUESDAY',desc:'All of Tuesday.',base:2,rider:1},
+    {name:'REDEFINE “TEMPORARY” AS FORTY-EIGHT HOURS',desc:'Applies to basketball hoops, wreaths, and moving boxes.',base:2,rider:1},
+    {name:'THE INFLATABLE DEFLATION SCHEDULE',desc:'Down by the ninth. The ninth of January is not a negotiation.',base:2,rider:1},
+    {name:'AUTHORIZE A SECOND CLIPBOARD',desc:'The first clipboard is at capacity.',base:2,rider:1},
+    {name:'CITE THE POND',desc:'The pond has been out of compliance since the day it was dug.',base:1,rider:1},
+    {name:'WELCOME BASKET WITH ENCLOSED CITATION',desc:'New neighbors should know where they stand. Immediately.',base:1,rider:1}
+  ],
+  crisis:{
+    prompt:'A single plastic flamingo has appeared on YOUR lawn overnight. Three neighbors are filming from the sidewalk.',
+    options:[
+      {t:'Cite yourself, loudly, at the full fine',delta:3,
+       headline:'President Cites Own Lawn At Full Fine; Neighbors Call Enforcement “Almost Beautiful”'},
+      {t:'Impound the flamingo as evidence',delta:2,
+       headline:'Flamingo Impounded; Board Opens Inquiry Into Its Eleven Known Associates'},
+      {t:'Laugh it off — it is one flamingo',delta:-4,
+       headline:'President Laughs Off Flamingo; By Morning There Are Ninety'}
+    ]
+  },
+  headlines:{
+    pass:['Citations Reach {KPI}; Print Shop Adds A Second Shift',
+          'Motion Carries 4–1; The Dissenter’s Hedge Noted For Later',
+          'Measure Passes; Copies Available At The Clubhouse During Hours Nobody Is Home',
+          'Neighbor Who Complained About The Rules Cited For Complaining Incorrectly',
+          'Vote Carries; Willow Court Described As Furious And Compliant',
+          'Board Thanks The Public For Comments, None Of Which Were Read'],
+    big:['Unanimous: Flamingo Faction Votes Against Its Own Interest, Twice',
+         'Every Hand Raised; Someone In The Back Says “Finally”'],
+    fail:['Motion Dies; Board Reminds Residents That Grass Continues To Grow',
+          'Measure Fails After Someone Reads Subsection 4(b) Aloud, In Full',
+          'Vote Lost; Three Citations Rescinded, One With An Apology']
+  },
+  ticker:['Willow Court Boat Enters Fourth Year Of Temporary Status',
+          'Clubhouse Vending Machine Cited For Unapproved Beige',
+          'Annual Meeting Reaches Hour Five; Refreshments Long Gone',
+          'Anonymous Complaint Filed From An Address That Does Not Exist',
+          'Pond Still Out Of Compliance'],
+  grades:[{min:-Infinity,label:'A NEIGHBORHOOD AT PEACE. UNACCEPTABLE.'},
+          {min:16,label:'FIRMLY DISLIKED'},
+          {min:24,label:'THE CLIPBOARD IS FEARED'},
+          {min:33,label:'EVERY LAWN IN VIOLATION OF SOMETHING'}]
+},
+{
+  id:'prophecy', tag:'🔮', title:'MAXIMUM PROPHECY',
+  blurb:'The scrolls must be fulfilled. They did not specify how.',
+  venue:'The Court of Grey Harrow — Hall of Unfulfilled Scrolls',
+  role:'Royal Fulfiller of Prophecy',
+  mandate:'The Kingdom of Grey Harrow holds four hundred and eleven prophecies and has fulfilled nine. The crown appointed you to correct that ratio. The scrolls are extremely specific about what must come to pass, and famously vague about how.',
+  kpiLabel:'PROPHECIES FULFILLED', kpi0:9, fmt:CORE.fmtUnit('prophecy','prophecies'),
+  integer:true, gradeOn:'final',
+  levers:['scripture','omens','bloodline','spectacle','paperwork'],
+  lines:{
+    scripture:['“The scroll says a king. It does not say the king.”',
+               '“Read the marginalia. In this kingdom the marginalia is load-bearing.”'],
+    omens:['“A comet was seen. Somewhere. By someone reliable.”',
+           '“The calf had two heads. Both of them nodded.”'],
+    bloodline:['“House Vareth has an heir available. Several, in fact.”',
+               '“The child is of the line. Technically. On the mother’s side.”'],
+    spectacle:['“Torches, a choir, and one very large door opening slowly.”',
+               '“We fulfil it at dusk, in the square, with the good banners.”'],
+    paperwork:['“Sealed, witnessed, and filed in triplicate before sundown.”',
+               '“The Registry gets a certified copy and a matching wax seal.”']
+  },
+  factions:[
+    {name:'The Scriptorium',icon:'SC',color:'#3a3a3a',fav:'scripture',hate:'spectacle',
+     bio:'Have read every scroll twice and found the comma that changes everything. A fulfilment staged for a crowd is a fulfilment performed for the wrong reason.'},
+    {name:'The Omen-Readers',icon:'OR',color:'#5a3a7a',fav:'omens',hate:'paperwork',
+     bio:'Interpret comets, two-headed calves, and unseasonal weather with total confidence. A prophecy stamped by a clerk stops being a prophecy.'},
+    {name:'House Vareth',icon:'HV',color:'#8a2a2a',fav:'bloodline',hate:'scripture',
+     bio:'Claim descent from the first three Chosen Ones and can supply an heir for any occasion. Regard close reading as a weapon used mainly against them.'},
+    {name:'The Pageant Guild',icon:'PG',color:'#a06020',fav:'spectacle',hate:'omens',
+     bio:'Stage every fulfilment with fire, banners, and a choir of forty. Real portents are unreliable and refuse to appear on schedule.'},
+    {name:'The Royal Registry',icon:'RR',color:'#2a6a8a',fav:'paperwork',hate:'bloodline',
+     bio:'Nothing is fulfilled until it is filed in triplicate and sealed. Every spring House Vareth submits eleven more heirs, and every spring it is a nightmare.'}
+  ],
+  policies:[
+    {name:'FULFIL “A CHILD SHALL UNITE THE KINGDOMS”',desc:'A toddler has been carried across a border. Twice, for the record.',base:4,rider:2},
+    {name:'FULFIL “THE DEAD SHALL RISE”',desc:'A gravedigger stood up. There were witnesses.',base:3,rider:2},
+    {name:'FULFIL “WHEN THE RIVER RUNS RED”',desc:'The upstream dye works, one afternoon, generous quantity.',base:3,rider:1},
+    {name:'FULFIL “A SWORD DRAWN FROM STONE”',desc:'The stone has been drilled. The sword slides beautifully.',base:3,rider:1},
+    {name:'FULFIL “THE SKY SHALL WEEP SEVEN DAYS”',desc:'It is the rainy season. Backdate the scroll.',base:2,rider:1},
+    {name:'FULFIL “THE LAST OF HIS NAME”',desc:'A man named Harrowford has agreed not to have children.',base:2,rider:1},
+    {name:'FULFIL “THE CROWN SHALL FALL”',desc:'A crown was set down on a table with insufficient care.',base:2,rider:1},
+    {name:'RECLASSIFY THREE OMENS AS FULFILMENTS',desc:'Retroactive, but the seals are entirely genuine.',base:2,rider:1},
+    {name:'FULFIL “A GREAT BEAST SHALL DARKEN THE FIELDS”',desc:'The miller’s bull is out again.',base:1,rider:1},
+    {name:'FULFIL “NONE SHALL PASS”',desc:'The bridge is closed for repairs until Thursday.',base:1,rider:1}
+  ],
+  crisis:{
+    prompt:'A genuine, unmistakable, correctly-timed prophecy has begun fulfilling ITSELF in the eastern sky. Nobody arranged this one.',
+    options:[
+      {t:'Claim it at once and get the seal on it first',delta:3,
+       headline:'Registry Confirms Seal Applied Before Comet Reached Its Peak; Crown “Delighted”'},
+      {t:'Assemble the choir beneath it and take partial credit',delta:2,
+       headline:'Choir Performs Under Genuine Portent; Guild Calls It Their Finest Collaboration'},
+      {t:'Announce that a real prophecy invalidates the technical ones',delta:-4,
+       headline:'Fulfiller Concedes Nine Were Technicalities; Kingdom Audits Everything Back To The Flood'}
+    ]
+  },
+  headlines:{
+    pass:['Fulfilments Reach {KPI}; Scriptorium Requests A Larger Ledger',
+          'Scroll Declared Satisfied; Nobody Present Wishes To Argue The Point',
+          'Court Rules That “Soon” Has, In Fact, Occurred',
+          'Prophecy Fulfilled On A Technicality; Technicality Fulfilled On A Technicality',
+          'Sword Removed From Stone To Modest, Contractually Obligated Applause',
+          'House Vareth Supplies A Chosen One, Then Two Spares'],
+    big:['Unanimous: Even The Registry Waives The Second Seal',
+         'Court Agrees In Full; Scriptorium Applauds Without Reading The Clause'],
+    fail:['Motion Denied; Scroll Reread Aloud, Slowly, With Emphasis',
+          'Fulfilment Revoked After Toddler Found To Be Merely Short',
+          'Registry Voids Three Prophecies Over One Missing Seal']
+  },
+  ticker:['Comet Sighted; Four Houses Claim It Was Theirs',
+          'Two-Headed Calf Kept On Permanent Retainer',
+          'Sword Vendor Reports Best Quarter In A Century',
+          'Unfulfilled Backlog Passes Four Hundred; Crown Aware Of It',
+          'Stone Drill Guild Denies Everything'],
+  grades:[{min:-Infinity,label:'THE SCROLLS REMAIN, ANNOYINGLY, UNFULFILLED'},
+          {min:18,label:'TECHNICALLY DEVOUT'},
+          {min:26,label:'THE PROPHECIES ARE BEING MET HALFWAY'},
+          {min:34,label:'EVERY SCROLL SATISFIED. NONE HONORED.'}]
 }
 ];
+/*PACKS_END*/
 
 // ============================ AUDIO (tiny) ============================
 let AC=null;
@@ -447,17 +731,46 @@ function animKpi(from,to){
   setTimeout(()=>renderKpi(to), dur+150);
 }
 function bestKey(id){ return 'mandate_best_'+id; }
-function fmtGainNum(scn,v){ return scn.integer?(Math.round(v)+(Math.round(v)===1?' war':' wars')):scn.fmt(v); }
+function fmtGainNum(scn,v){ return scn.fmt(v); }
+
+// ---------- the daily ----------
+// One mandate per UTC day — the same one for every player on earth — walking the
+// whole anthology a pack at a time. Played once; after that you get the receipt.
+function todayStr(){ return CORE.utcDateStr(Date.now()); }
+function dailyPack(d){ return SCENARIOS[CORE.dailyPackIndex(d, SCENARIOS.length)]; }
+function dailyKey(d){ return 'mandate_daily_'+d; }
+function dailyRecord(d){
+  try{ const raw=localStorage.getItem(dailyKey(d)); return raw?JSON.parse(raw):null; }catch(e){ return null; }
+}
+function saveDaily(d,rec){ try{ localStorage.setItem(dailyKey(d),JSON.stringify(rec)); }catch(e){} }
+let titleTimer=null;
+function clearTitleTimer(){ if(titleTimer){ clearInterval(titleTimer); titleTimer=null; } }
 
 // ---------- title ----------
 function screenTitle(){
+  clearTitleTimer();
   kpiBar.style.display='none';
   setTicker(null,['You promised. They believed you. Deliver.']);
-  let h='<h3>Choose your mandate</h3>';
+  const dstr=todayStr(), dno=CORE.dailyNumber(dstr), drec=dailyRecord(dstr), dscn=dailyPack(dstr);
+  let h='<div class="card daily">'
+    +'<div class="dailyHead"><span>THE DAILY MANDATE</span><span class="dailyNo">№'+dno+'</span></div>';
+  if(drec){
+    h+='<div class="meta">'+esc(drec.title)+' — filed.</div>'
+      +'<div class="dailyResult">'+esc(drec.kpi)+'</div>'
+      +'<div class="dailyGrade">'+esc(drec.grade)+'</div>'
+      +'<div class="meta" id="dailyCd" style="margin-top:9px">the next mandate is at the typesetter</div>'
+      +'<button class="btn btnGhost" id="bDailyCopy">COPY TODAY’S RESULT</button>';
+  }else{
+    h+='<div class="meta">Every player on earth gets this one today.</div>'
+      +'<div class="billName" style="margin-top:7px">'+dscn.tag+' '+esc(dscn.title)+'</div>'
+      +'<div class="mandateLine">'+esc(dscn.blurb)+'</div>'
+      +'<button class="btn" id="bDaily">PLAY TODAY’S MANDATE</button>';
+  }
+  h+='</div><h3>Free play — '+SCENARIOS.length+' mandates</h3>';
   for(const s of SCENARIOS){
     const best=localStorage.getItem(bestKey(s.id));
     h+='<button class="card scnCard" data-scn="'+s.id+'">'
-      +'<div class="billName">'+s.tag+' '+s.title+'</div>'
+      +'<div class="billName">'+s.tag+' '+s.title+'</div>'
       +'<div class="meta">'+esc(s.venue)+'</div>'
       +'<div class="mandateLine">'+esc(s.blurb)+'</div>'
       +(best?'<div class="best">YOUR RECORD: '+esc(best)+'</div>':'')
@@ -467,12 +780,30 @@ function screenTitle(){
   app.innerHTML=h;
   app.querySelectorAll('[data-scn]').forEach(b=>b.onclick=()=>{ audio(); sndClick();
     startRun(SCENARIOS.find(x=>x.id===b.dataset.scn)); });
+  const bd=document.getElementById('bDaily');
+  if(bd) bd.onclick=()=>{ audio(); sndClick();
+    startRun(dscn,{date:dstr,n:dno,seed:CORE.dailySeed(dstr)}); };
+  const bc=document.getElementById('bDailyCopy');
+  if(bc) bc.onclick=async()=>{
+    try{ await navigator.clipboard.writeText(drec.share); bc.textContent='COPIED ✓'; }catch(e){}
+  };
+  if(drec){
+    const cd=document.getElementById('dailyCd');
+    const tickCd=()=>{
+      if(!document.body.contains(cd)){ clearTitleTimer(); return; }
+      cd.textContent='next mandate in '+CORE.fmtCountdown(CORE.msToNextUtcDay(Date.now()));
+    };
+    tickCd(); titleTimer=setInterval(tickCd,1000);
+  }
+  window.scrollTo(0,0);
 }
 
 // ---------- run setup ----------
-function startRun(scn){
-  const seed=(Date.now()^(Math.random()*1e9))>>>0;
-  S={scn, seed, rng:CORE.mulberry32(seed), round:1, kpi:scn.kpi0,
+// daily = {date,n,seed} for the Daily; omitted for free play, which stays random.
+function startRun(scn,daily){
+  clearTitleTimer();
+  const seed=daily?daily.seed:((Date.now()^(Math.random()*1e9))>>>0);
+  S={scn, seed, daily:daily||null, rng:CORE.mulberry32(seed), round:1, kpi:scn.kpi0,
      streak:0, maxStreak:0, whipCorrect:0, whipTotal:0,
      pool:CORE.shuffle(CORE.mulberry32(seed^0xBEEF), scn.policies),
      earned:[], crisisDone:false, headlineIdx:{pass:0,fail:0,big:0}};
@@ -648,9 +979,13 @@ function screenFinale(){
   const isRecord=prevRaw===null||gradeVal>parseFloat(prevRaw);
   if(isRecord){ try{ localStorage.setItem(bestKey(scn.id)+'_v',String(gradeVal));
     localStorage.setItem(bestKey(scn.id), kpiStr+' — '+grade); }catch(e){} }
-  const card=composeFrontPage(scn,kpiStr,grade,heads);
-  S.shareTxt=CORE.emojiShare(scn.tag,scn.title,kpiStr,grade,heads[0]||'',S.maxStreak,S.whipCorrect,S.whipTotal);
-  let h='<div style="text-align:center;margin:8px 0"><span class="stamp">'+esc(grade)+'</span></div>'
+  const dailyNo=S.daily?S.daily.n:null;
+  const card=composeFrontPage(scn,kpiStr,grade,heads,dailyNo);
+  S.shareTxt=CORE.emojiShare(scn.tag,scn.title,kpiStr,grade,heads[0]||'',S.maxStreak,S.whipCorrect,S.whipTotal,dailyNo);
+  if(S.daily) saveDaily(S.daily.date,{n:dailyNo,pack:scn.id,title:scn.title,
+                                      kpi:kpiStr,grade:grade,share:S.shareTxt});
+  let h=(dailyNo!=null?'<div class="dots">THE DAILY MANDATE №'+dailyNo+' — FILED</div>':'')
+    +'<div style="text-align:center;margin:8px 0"><span class="stamp">'+esc(grade)+'</span></div>'
     +(isRecord?'<div style="text-align:center" class="best">A PERSONAL RECORD. HISTORY WILL SQUINT.</div>':'')
     +'<img id="shareImg" alt="Your front page">'
     +'<div class="emojiBlock">'+esc(S.shareTxt)+'</div>'
@@ -680,7 +1015,7 @@ function screenFinale(){
   document.getElementById('bMenu').onclick=()=>{ sndClick(); screenTitle(); };
   window.scrollTo(0,0);
 }
-function composeFrontPage(scn,kpiStr,grade,heads){
+function composeFrontPage(scn,kpiStr,grade,heads,dailyNo){
   const c=document.createElement('canvas'); c.width=900; c.height=1200;
   const g=c.getContext('2d');
   g.fillStyle='#f6f1e3'; g.fillRect(0,0,900,1200);
@@ -689,9 +1024,12 @@ function composeFrontPage(scn,kpiStr,grade,heads){
   g.font='bold 64px Georgia'; g.fillText('THE DAILY MANDATE',450,120);
   g.font='italic 20px Georgia'; g.fillStyle='#6b6355';
   g.fillText('All nations fictional. All incentives real.',450,152);
-  g.font='16px Arial';
   const date=new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
-  g.fillText(date+'  ·  '+scn.venue,450,182);
+  let meta=date+'  ·  '+scn.venue;
+  if(dailyNo!=null) meta='DAILY MANDATE №'+dailyNo+'  ·  '+meta;
+  let mf=16; g.font=mf+'px Arial';               // long venues must not run off the page
+  while(g.measureText(meta).width>770&&mf>10){ mf--; g.font=mf+'px Arial'; }
+  g.fillText(meta,450,182);
   g.strokeStyle='#1c1a16'; g.lineWidth=2;
   g.beginPath(); g.moveTo(60,200); g.lineTo(840,200); g.stroke();
   g.beginPath(); g.moveTo(60,206); g.lineTo(840,206); g.stroke();
